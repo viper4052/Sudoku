@@ -34,38 +34,13 @@ var_timer = False
 dific_facil = False
 dific_inter = False
 dific_dificil = False
+cont = 0
+var_juego_en_curso = False
 
 # ------------------------ TITULO --------------------------
 l_sudoku = Label(ventana, text='SUDOKU', bg="#b2bec3",
                  fg='#d63031', font=(CalibriL, 30))
 l_sudoku.grid(column=10, row=0, columnspan=1)
-
-# --------------------- DICCIONARIOS DE PARTIDAS -------------------
-# OJO GRABAR EN ARCHIVO Y LEER DESDE AHI
-dicc_partida_facil = {1: [
-    ['5', '3', '', '', '7', '', '', '', ''],
-    ['6', '', '', '1', '9', '5', '', '', ''],
-    ['', '9', '8', '', '', '', '', '6', ''],
-    ['8', '', '', '', '6', '', '', '', '3'],
-    ['4', '', '', '8', '', '3', '', '', '1'],
-    ['7', '', '', '', '2', '', '', '', '6'],
-    ['', '6', '', '', '', '', '2', '8', ''],
-    ['', '', '', '4', '1', '9', '', '', '5'],
-    ['', '', '', '', '8', '', '', '7', '9']]}
-# OJO GRABAR EN ARCHIVO Y LEER DESDE AHI
-dicc_partida_intermedio = {1: [
-    ['', '', '', '', '8', '', '', '', '6'],
-    ['', '9', '4', '', '5', '', '', '', ''],
-    ['8', '', '2', '', '', '3', '', '', ''],
-    ['', '', '', '8', '3', '', '7', '5', ''],
-    ['', '', '', '7', '4', '', '6', '9', ''],
-    ['', '3', '', '1', '', '6', '', '', '2'],
-    ['', '6', '', '', '', '', '2', '8', ''],
-    ['', '', '', '4', '1', '9', '', '', '5'],
-    ['3', '4', '', '', '6', '', '8', '2', '']]}
-# OJO GRABAR EN ARCHIVO Y LEER DESDE AHI
-dicc_partida_dificil = {}
-
 
 # --------------------- MARCO DE BOTONES --------------------
 
@@ -155,7 +130,7 @@ def botones_ventana():
     boton_cargar_partida.place(x=500, y=590)
     
 
-# -------------------------- ENTRY JUGADOR -----------------------
+# -------------------------- ENTRY JUGADOR --------------------------------------
 jugador_actual = StringVar()
 
 
@@ -171,25 +146,28 @@ def entry_jugador():
 
 # ---------------------------- VALIDACIONES BOTONES SIN NUMERO -----------------
 def b_iniciar_juego():
-    global jugador_actual
+    global jugador_actual, var_juego_en_curso
     nombre = jugador_actual.get()
-    if 0 < len(nombre) < 30:
-        pass
+    if 0 < len(nombre) < 30 or var_juego_en_curso is True:
+        messagebox.showinfo(title='Exito', message='Si funca')
+        temporizador_gen()
         # realizar el guardado de partida con el nombre del jugador
     else:
         messagebox.showerror(title='Error', message='Espacio de jugador debe'
                                                     ' tener entre 1 y 30 caracteres')
 
 
-# -------------------------- FUNCIONES MENU -----------------------
+# -------------------------- FUNCIONES MENU -----------------------------------
 
 def menu_jugar():
     zona_de_juego()
     botones_ventana()
     entry_jugador()
 
+
 def menu_configurar():
-    global dific_facil, dific_inter, dific_dificil
+    global dific_facil, dific_inter, dific_dificil, cont, var_timer
+    var_timer=False
     ANCHO2, ALTO2 = 300, 320
     POS_VENTANA_X2, POS_VENTANA_Y2 = 650, 400
     ventanaConfiguracion = Toplevel()
@@ -207,31 +185,31 @@ def menu_configurar():
     # Pagina 1 de config
     pagina1 = ttk.Frame(nb)
     nb.add(pagina1, text='Nivel')
-    facil_rb = Radiobutton(pagina1, text='Fácil', value='1', variable=1)
+    facil_rb = Radiobutton(pagina1, text='Fácil', value=1)
+    facil_rb.select()
     facil_rb.place(x=50, y=80)
-    intermedio_rb = Radiobutton(pagina1, text='Intermedio', value='2', variable=2)
+    intermedio_rb = Radiobutton(pagina1, text='Intermedio', value=2)
+    intermedio_rb.selection_clear()
     intermedio_rb.place(x=50, y=110)
-    dificil_rb = Radiobutton(pagina1, text='Difícil', value='3', variable=3)
+    dificil_rb = Radiobutton(pagina1, text='Difícil', value=3)
+    dificil_rb.selection_clear()
     dificil_rb.place(x=50, y=140)
+
+
 
     # Pagina 2 de config
     pagina2 = ttk.Frame(nb)
     nb.add(pagina2, text='Reloj')
-    btn_si = StringVar()
-    btn_no = StringVar()
-    btn_timer = StringVar()
-    si_rb = Radiobutton(pagina2, text='Sí', value=4)#, variable=btn_si)
-    si_rb.place(x=50, y=80)
-    no_rb = Radiobutton(pagina2, text='No', value=5)#, variable=btn_no)
-    no_rb.place(x=50, y=110)
-    timer_rb = Radiobutton(pagina2, text='Timer', value=6)#, variable=btn_timer)
-    timer_rb.place(x=50, y=140)
 
-    #def guarda_cambios():
-     #   x = btn_si.get()
-     #   y = btn_no.get()
-     #   z = btn_timer.get()
-     #   print(x, y, z)
+    si_rb = Radiobutton(pagina2, text='Sí', value=4, command=lambda: print('si'))
+    si_rb.select()
+    si_rb.place(x=50, y=80)
+    no_rb = Radiobutton(pagina2, text='No', value=5, command=lambda: oculta_temporizador())
+    no_rb.deselect()
+    no_rb.place(x=50, y=110)
+    timer_rb = Radiobutton(pagina2, text='Timer', value=6, command=lambda: muestra_temporizador())
+    timer_rb.deselect()
+    timer_rb.place(x=50, y=140)
 
     l_tiempo_pref = Label(pagina2, text='HH:MM:SS', font=(CalibriL, 8))
     l_tiempo_pref.place(x=185, y=75)
@@ -248,7 +226,7 @@ def menu_configurar():
 
     seg_str = StringVar()
     segundos = Entry(pagina2, width=3, font=(CalibriL, 10), bg='azure',
-                  textvar=seg_str, justify='left')
+                     textvar=seg_str, justify='left')
     segundos.place(x=230, y=100)
 
     # Pagina 3 de config
@@ -273,6 +251,88 @@ def menu_configurar():
     ventanaConfiguracion.transient()
     ventanaConfiguracion.grab_set()
     ventana.wait_window(ventanaConfiguracion)
+# ------------------------------------------------------------------------
+timer = StringVar()
+timer.set('00:00:00')
+l_timer = Label(ventana, textvariable=timer, font=(CalibriL, 18))
+l_timer.config(bg='#b2bec3')
+
+def temporizador_gen():
+    global var_timer, cont, var_juego_en_curso
+    var_timer = True
+    var_juego_en_curso = True
+
+    def resetear():
+        global cont
+        cont = 1
+        timer.set('00:00:00')
+
+    def iniciar():
+        global cont
+        cont = 0
+        iniciar_timer()
+
+    def temporizador():
+        global cont
+        if cont == 0:
+            d = str(timer.get())
+            h, m, s = map(int, d.split(':'))
+            h = int(h)
+            m = int(m)
+            s = int(s)
+            if s < 59:
+                s += 1
+            elif s == 59:
+                s = 0
+                if m < 59:
+                    m += 1
+                elif m == 59:
+                    h += 1
+            if h < 10:
+                h = str(0)+str(h)
+            else:
+                h = str(h)
+            if m < 10:
+                m = str(0)+str(m)
+            else:
+                m = str(m)
+            if s < 10:
+                s = str(0)+str(s)
+            else:
+                s = str(s)
+            d = h + ':' + m + ':' + s
+            timer.set(d)
+
+            if cont == 0:
+                ventana.after(930, iniciar_timer)
+
+    def iniciar_timer():
+        temporizador()
+
+    def stop():
+        global cont
+        cont = 1
+
+    if var_juego_en_curso:
+        iniciar_timer()
+    else:
+        stop()
+
+
+
+
+
+def muestra_temporizador():
+    global var_timer
+    var_timer = True
+    #temporizador_gen()
+    l_timer.place(x=85, y=650)
+
+def oculta_temporizador():
+    global var_timer
+    var_timer = False
+    l_timer.place_forget()
+# ----------------------------------------------------
 
 
 def acerca_de():
