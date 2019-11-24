@@ -4,8 +4,7 @@ from tkinter import font
 from tkinter import messagebox
 from tkinter import ttk
 import random
-from time import *
-import os
+
 
 TITULO = 'Sudoku'
 ANCHO, ALTO = 900, 750
@@ -29,8 +28,17 @@ ventana.iconbitmap('sudoku.ico')
 # ----------------- FUENTE GLOBAL -----------------------------
 CalibriL = font.Font(family='Calibri Light', size=8, weight='bold')
 
+# ------------------- SUDOKU USADO EN EL MOMENTO ----------------------
+sudoku = []
+
+
+row = []
+column = []
+
+dict_tablero = eval(open('sudoku2019partidas.dat').read())
 # ------------------- BOOLEANOS GLOBALES ----------------------
-var_timer = False
+var_timer_arriba= False
+var_timer_abajo = False
 dific_facil = False
 dific_inter = False
 dific_dificil = False
@@ -45,34 +53,44 @@ l_sudoku.grid(column=10, row=0, columnspan=1)
 # --------------------- MARCO DE BOTONES --------------------
 
 def zona_de_juego():
-    global dific_facil, dific_inter
+    global dific_facil, dific_inter, dific_dificil, sudoku, row, column, dict_tablero
     probabilidad = random.randint(0, 100)
     # prueba de muestra de tablero
     tablero = 1
-    if dific_facil == True:
+    if dific_facil:
         if probabilidad < 50:
             tablero = 1
         else:
             tablero = 2
-        # agregar condicional para el tercer sudoku
-    elif dific_inter == True:
+    elif dific_inter:
         if probabilidad < 50:
             tablero = 4
         else:
             tablero = 5
+    elif dific_dificil:
+        if probabilidad < 50:
+            tablero = 6
+        else:
+            tablero = 7
     marco_juego = Frame(ventana, width=250, height=250)
     marco_juego.configure(bg='white')
     for i in range(9):
         marco_juego.columnconfigure(i, weight=1)
         marco_juego.rowconfigure(i, weight=1)
     marco_juego.grid(column=3, row=1, sticky=NSEW, columnspan=9, rowspan=9)
-    dict = eval(open('sudoku2019partidas.dat').read())
+    sudoku = dict_tablero[tablero]
     for x in range(9):
         for y in range(9):
-            btn_celda = Button(marco_juego, text=dict[tablero][y][x])
-            if dict[tablero][y][x] != '':
+            btn_celda = Button(marco_juego, text=sudoku[y][x], command=lambda row=y, column=x: coloca_num(row, column))
+            if dict_tablero[tablero][y][x] != '':
                 btn_celda.config(state=DISABLED)
-            btn_celda.grid(column=x, row=y, sticky=N+S+E+W)
+            btn_celda.grid(column=x, row=y, sticky=NSEW)
+
+
+# realizar validaciones y conectar con los botones de numeros
+def coloca_num(y, x):
+    sudoku[y][x] = '1'
+    zona_de_juego()
 
 
 def botones_ventana():
@@ -146,11 +164,17 @@ def entry_jugador():
 
 # ---------------------------- VALIDACIONES BOTONES SIN NUMERO -----------------
 def b_iniciar_juego():
-    global jugador_actual, var_juego_en_curso
+    global jugador_actual, var_juego_en_curso, var_timer_abajo, var_timer_arriba
     nombre = jugador_actual.get()
-    if 0 < len(nombre) < 30 or var_juego_en_curso is True:
+    if 0 < len(nombre) < 30:
+        var_juego_en_curso = True
         messagebox.showinfo(title='Exito', message='Si funca')
-        temporizador_gen()
+        print(jugador_actual, var_juego_en_curso, var_timer_abajo, var_timer_arriba)
+        if var_timer_arriba:
+            temporizador_arriba()
+        #elif var_timer_abajo:
+        #    temporizador_abajo()
+
         # realizar el guardado de partida con el nombre del jugador
     else:
         messagebox.showerror(title='Error', message='Espacio de jugador debe'
@@ -166,8 +190,9 @@ def menu_jugar():
 
 
 def menu_configurar():
-    global dific_facil, dific_inter, dific_dificil, cont, var_timer
-    var_timer=False
+    global dific_facil, dific_inter, dific_dificil, cont, var_timer_arriba, var_timer_abajo
+    var_timer_arriba = False
+    var_timer_abajo = False
     ANCHO2, ALTO2 = 300, 320
     POS_VENTANA_X2, POS_VENTANA_Y2 = 650, 400
     ventanaConfiguracion = Toplevel()
@@ -185,13 +210,13 @@ def menu_configurar():
     # Pagina 1 de config
     pagina1 = ttk.Frame(nb)
     nb.add(pagina1, text='Nivel')
-    facil_rb = Radiobutton(pagina1, text='Fácil', value=1)
+    facil_rb = Radiobutton(pagina1, text='Fácil', value=1, command=lambda: dificultad_facil())
     facil_rb.select()
     facil_rb.place(x=50, y=80)
-    intermedio_rb = Radiobutton(pagina1, text='Intermedio', value=2)
+    intermedio_rb = Radiobutton(pagina1, text='Intermedio', value=2, command=lambda: dificultad_intermedia())
     intermedio_rb.selection_clear()
     intermedio_rb.place(x=50, y=110)
-    dificil_rb = Radiobutton(pagina1, text='Difícil', value=3)
+    dificil_rb = Radiobutton(pagina1, text='Difícil', value=3, command=lambda: dificultad_dificil())
     dificil_rb.selection_clear()
     dificil_rb.place(x=50, y=140)
 
@@ -201,13 +226,13 @@ def menu_configurar():
     pagina2 = ttk.Frame(nb)
     nb.add(pagina2, text='Reloj')
 
-    si_rb = Radiobutton(pagina2, text='Sí', value=4, command=lambda: print('si'))
+    si_rb = Radiobutton(pagina2, text='Sí', value=4, command=lambda: muestra_temporizador_arriba())
     si_rb.select()
     si_rb.place(x=50, y=80)
     no_rb = Radiobutton(pagina2, text='No', value=5, command=lambda: oculta_temporizador())
     no_rb.deselect()
     no_rb.place(x=50, y=110)
-    timer_rb = Radiobutton(pagina2, text='Timer', value=6, command=lambda: muestra_temporizador())
+    timer_rb = Radiobutton(pagina2, text='Timer', value=6, command=lambda: muestra_temporizador_abajo())
     timer_rb.deselect()
     timer_rb.place(x=50, y=140)
 
@@ -215,51 +240,79 @@ def menu_configurar():
     l_tiempo_pref.place(x=185, y=75)
 
     horas_str = StringVar()
+    horas_str.set('01')
     horas = Entry(pagina2, width=3, font=(CalibriL, 10), bg='azure',
                   textvar=horas_str, justify='left')
     horas.place(x=170, y=100)
 
     minut_str = StringVar()
+    minut_str.set('30')
     minut = Entry(pagina2, width=3, font=(CalibriL, 10), bg='azure',
                   textvar=minut_str, justify='left')
     minut.place(x=200, y=100)
 
     seg_str = StringVar()
+    seg_str.set('00')
     segundos = Entry(pagina2, width=3, font=(CalibriL, 10), bg='azure',
                      textvar=seg_str, justify='left')
     segundos.place(x=230, y=100)
+
+    def nuevo_reloj():
+        global timer
+        n_horas = horas.get()
+        n_minut = minut.get()
+        n_seg = segundos.get()
+        timer.set(str(n_horas)+':'+str(n_minut)+':'+str(n_seg))
 
     # Pagina 3 de config
     pagina3 = ttk.Frame(nb)
     nb.add(pagina3, text='Elementos')
 
-    def cambia_dificultad():
-        global dific_facil, dific_inter, dific_dificil
-        if facil_rb:
-            pass
+    # --------------------- BOTON APLICAR CONFIGURACION --------------------------------------
 
-    # --------------------- BOTON APLICAR CONFIGURACION EN CADA PESTANA
-    boton_aplicar_dif = Button(pagina1, text='Aplicar', command=None)
-    boton_aplicar_dif.place(x=240, y=250)
-
-    boton_aplicar_reloj = Button(pagina2, text='Aplicar', command=None)
-    boton_aplicar_reloj.place(x=240, y=250)
-
-    boton_aplicar_elem = Button(pagina3, text='Aplicar', command=None)
-    boton_aplicar_elem.place(x=240, y=250)
+    boton_aplicar_reloj = Button(pagina2, text='Aplicar a temporizador', command=lambda: nuevo_reloj())
+    boton_aplicar_reloj.place(x=150, y=130)
 
     ventanaConfiguracion.transient()
     ventanaConfiguracion.grab_set()
     ventana.wait_window(ventanaConfiguracion)
 # ------------------------------------------------------------------------
+
+
+def dificultad_facil():
+    global dific_facil, dific_inter, dific_dificil
+    dific_facil = True
+    dific_inter = False
+    dific_dificil = False
+    zona_de_juego()
+
+
+def dificultad_intermedia():
+    global dific_facil, dific_inter, dific_dificil
+    dific_facil = False
+    dific_inter = True
+    dific_dificil = False
+    zona_de_juego()
+
+
+def dificultad_dificil():
+    global dific_facil, dific_inter, dific_dificil
+    dific_facil = False
+    dific_inter = False
+    dific_dificil = True
+    zona_de_juego()
+
+
 timer = StringVar()
 timer.set('00:00:00')
 l_timer = Label(ventana, textvariable=timer, font=(CalibriL, 18))
 l_timer.config(bg='#b2bec3')
 
-def temporizador_gen():
-    global var_timer, cont, var_juego_en_curso
-    var_timer = True
+
+def temporizador_arriba():
+    global var_timer_arriba, var_timer_abajo, cont, var_juego_en_curso
+    var_timer_arriba = True
+    var_timer_abajo = False
     var_juego_en_curso = True
 
     def resetear():
@@ -275,8 +328,8 @@ def temporizador_gen():
     def temporizador():
         global cont
         if cont == 0:
-            d = str(timer.get())
-            h, m, s = map(int, d.split(':'))
+            tiempo = str(timer.get())
+            h, m, s = map(int, tiempo.split(':'))
             h = int(h)
             m = int(m)
             s = int(s)
@@ -300,8 +353,8 @@ def temporizador_gen():
                 s = str(0)+str(s)
             else:
                 s = str(s)
-            d = h + ':' + m + ':' + s
-            timer.set(d)
+            tiempo = h + ':' + m + ':' + s
+            timer.set(tiempo)
 
             if cont == 0:
                 ventana.after(930, iniciar_timer)
@@ -319,18 +372,89 @@ def temporizador_gen():
         stop()
 
 
+# temporizador_abajo no funciona correctamente
+def temporizador_abajo():
+    global var_timer_abajo, var_timer_arriba, cont, var_juego_en_curso
+    var_timer_abajo = True
+    var_timer_arriba = False
+    var_juego_en_curso = True
+
+    def resetear():
+        global cont
+        cont = 1
+        timer.set('00:00:00')
+
+    def iniciar():
+        global cont
+        cont = 0
+        iniciar_timer()
+
+    def temporizador():
+        global cont
+        if cont == 0:
+            tiempo = str(timer.get())
+            h, m, s = map(int, tiempo.split(':'))
+            h = int(h)
+            m = int(m)
+            s = int(s)
+            if s > 59:
+                s -= 1
+            elif s == 59:
+                s = 0
+                if m > 59:
+                    m -= 1
+                elif m == 59:
+                    h -= 1
+            if h < 10:
+                h = str(0)+str(h)
+            else:
+                h = str(h)
+            if m < 10:
+                m = str(0)+str(m)
+            else:
+                m = str(m)
+            if s < 10:
+                s = str(0)+str(s)
+            else:
+                s = str(s)
+            tiempo = h + ':' + m + ':' + s
+            timer.set(tiempo)
+
+            if cont == 0:
+                ventana.after(930, iniciar_timer)
+
+    def iniciar_timer():
+        temporizador()
+
+    def stop():
+        global cont
+        cont = 1
+
+    if var_juego_en_curso:
+        iniciar_timer()
+    else:
+        stop()
 
 
+def muestra_temporizador_arriba():
+    global var_timer_arriba, var_timer_abajo
+    var_timer_arriba = True
+    var_timer_abajo = False
+    l_timer.place(x=85, y=650)
+    print(var_timer_arriba)
 
-def muestra_temporizador():
-    global var_timer
-    var_timer = True
-    #temporizador_gen()
+
+def muestra_temporizador_abajo():
+    global var_timer_abajo, var_timer_arriba
+    var_timer_arriba = False
+    var_timer_abajo = True
     l_timer.place(x=85, y=650)
 
+
 def oculta_temporizador():
-    global var_timer
-    var_timer = False
+    global var_timer_arriba, var_timer_abajo
+    var_timer_arriba = False
+    var_timer_abajo = False
     l_timer.place_forget()
 # ----------------------------------------------------
 
@@ -366,5 +490,3 @@ menubar.add_cascade(label='Ayuda', command=None)
 menubar.add_cascade(label='Salir', command=salir)
 
 ventana.mainloop()
-
-
