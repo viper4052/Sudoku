@@ -240,7 +240,7 @@ def coloca_num(y, x):
                                                                     lista_top.pop(10)
                                                                     break
                                                         ind += 1
-                                                        print(lista_top)
+                                                        escribe_top10()
                                                         messagebox.showinfo('¡Felicidades!', '¡Ganaste el juego!')
                                                     else:
                                                         zona_de_juego(sudoku)
@@ -453,11 +453,12 @@ def b_iniciar_juego():
        si el campo del nombre de jugador está lleno. Comienza
        el temporizador en el caso que lo decidiera activar.
     '''
-    global jugador_actual, var_juego_en_curso, var_timer_abajo, var_timer_arriba
+    global jugador_actual, var_juego_en_curso, var_timer_abajo, var_timer_arriba, lista_top
     nombre = jugador_actual.get()
     if 0 < len(nombre) < 30:
         var_juego_en_curso = True
         zona_de_juego(sudoku)
+        escribe_top10()
         print(jugador_actual, var_juego_en_curso, var_timer_abajo, var_timer_arriba)
         if var_timer_arriba:
             temporizador_arriba()
@@ -963,6 +964,7 @@ class TopDiez:
         texto(self)
 
 def muestra_top10():
+    global lista_top
     ventanita = Tk()
     ventanita.geometry('{}x{}+{}+{}'.format(300, 400,
                                        POS_VENTANA_X, POS_VENTANA_Y))
@@ -970,6 +972,11 @@ def muestra_top10():
     top_diez = TopDiez(ventanita)
     ventanita.mainloop()
 
+def escribe_top10():
+    global lista_top
+    archivo = open('sudoku2019top10.dat', 'w+')
+    archivo.write(str(lista_top))
+    archivo.close()
 
 # ----------------------------------------------------
 
