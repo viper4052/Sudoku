@@ -56,6 +56,9 @@ tablero = 1
 sudoku_inicial = dict_tablero[tablero]
 sudoku = dict_tablero[tablero]
 pila_coord_jugadas = []
+lista_top = [['Nadie', '00:00:00'],['Nadie', '00:00:00'],['Nadie', '00:00:00'],['Nadie', '00:00:00'],
+             ['Nadie', '00:00:00'],['Nadie', '00:00:00'],['Nadie', '00:00:00'],['Nadie', '00:00:00'],
+             ['Nadie', '00:00:00'], ['Nadie', '00:00:00']]
 
 # ------------------------ TITULO --------------------------
 l_sudoku = Label(ventana, text='SUDOKU', bg="#b2bec3",
@@ -146,6 +149,7 @@ def coloca_num(y, x):
        en la matriz de botones
     '''
     global numero_actual, var_juego_en_curso, sudoku, var_coloca, n_row, n_column, pila_coord_jugadas
+    global horas, minutos, segundos, jugador_actual, lista_top
     n_row = y
     n_column = x
 
@@ -213,6 +217,30 @@ def coloca_num(y, x):
                                                     pila_coord_jugadas.append([y, x])
                                                     var_juego_en_curso = True
                                                     if valida_estado(sudoku):
+                                                        horas = int(horas)
+                                                        minutos = int(minutos)
+                                                        segundos = int(segundos)
+                                                        ind = 0
+                                                        if horas == 0 and minutos == 0 and segundos == 0:
+                                                            lista_top.insert(ind, (jugador_actual.get, str(horas)+':'+str(minutos)+':'+str(segundos)))
+                                                            lista_top.pop(10)
+                                                            break
+                                                        elif horas < lista_top[0][1][0:2]:
+                                                            lista_top.insert(ind, (jugador_actual.get, str(horas)+':'+str(minutos)+':'+str(segundos)))
+                                                            lista_top.pop(10)
+                                                            break
+                                                        elif horas == lista_top[0][1][0:2]:
+                                                            if minutos < lista_top[0][1][2:4]:
+                                                                lista_top.insert(ind, (jugador_actual.get(), str(horas)+':'+str(minutos)+':'+str(segundos)))
+                                                                lista_top.pop(10)
+                                                                break
+                                                            elif minutos == lista_top[0][1][2:4]:
+                                                                if segundos <= lista_top[0][1][4:6]:
+                                                                    lista_top.insert(ind, (jugador_actual.get, str(horas)+':'+str(minutos)+':'+str(segundos)))
+                                                                    lista_top.pop(10)
+                                                                    break
+                                                        ind += 1
+                                                        print(lista_top)
                                                         messagebox.showinfo('¡Felicidades!', '¡Ganaste el juego!')
                                                     else:
                                                         zona_de_juego(sudoku)
@@ -259,7 +287,7 @@ def cambia_numero_actual(numero):
     D: Aquí se cambia el valor del numero a colocar
        en el marco de juego por el usuario.
     '''
-    global numero_actual
+    global numero_actual, jugador_actual
     numero_actual = numero
 
 
@@ -384,7 +412,7 @@ def botones_ventana():
     boton_borrar_juego.place(x=380, y=520)
 
     boton_top_10 = Button(ventana, text='TOP 10', bg='#fff200', height=2, width=8,
-                          command=None)
+                          command=lambda: muestra_top10())
     boton_top_10.place(x=490, y=520)
 
     boton_guardar_partida = Button(ventana, text='GUARDAR PARTIDA', bg='white', command=lambda: guarda_partida())
@@ -597,8 +625,7 @@ def dificultad_dificil():
     dific_dificil = True
     zona_de_juego(sudoku)
 
-def guarda_dificultad():
-    pass
+
 
 timer = StringVar()
 timer.set('00:00:00')
@@ -890,6 +917,58 @@ def valida_estado(sudoku):
                                         return True
         else:
             return False
+
+
+class TopDiez:
+    def __init__(self, w):
+        #global horas, minutos, segundos, jugador_actual
+        global lista_top
+        self.w = w
+        w.title('Top 10')
+
+        self.l_titulo = Label(w, text='TOP 10')
+        self.l_titulo.place(x=130, y=20)
+
+        def texto(self):
+            self.l_1 = Label(w, text=('1.' + '   ' + lista_top[0][0] + '  ' + lista_top[0][1]))
+            self.l_1.place(x=40, y=60)
+
+            self.l_2 = Label(w, text=('2.' + '   ' + lista_top[1][0] + '  ' + lista_top[1][1]))
+            self.l_2.place(x=40, y=90)
+
+            self.l_3 = Label(w, text=('3.' + '   ' + lista_top[2][0] + '  ' + lista_top[2][1]))
+            self.l_3.place(x=40, y=120)
+
+            self.l_4 = Label(w, text=('4.' + '   ' + lista_top[3][0] + '  ' + lista_top[3][1]))
+            self.l_4.place(x=40, y=150)
+
+            self.l_5 = Label(w, text=('5.' + '   ' + lista_top[4][0] + '  ' + lista_top[4][1]))
+            self.l_5.place(x=40, y=180)
+
+            self.l_6 = Label(w, text=('6.' + '   ' + lista_top[5][0] + '  ' + lista_top[5][1]))
+            self.l_6.place(x=40, y=210)
+
+            self.l_7 = Label(w, text=('7.' + '   ' + lista_top[6][0] + '  ' + lista_top[6][1]))
+            self.l_7.place(x=40, y=240)
+
+            self.l_8 = Label(w, text=('8.' + '   ' + lista_top[7][0] + '  ' + lista_top[7][1]))
+            self.l_8.place(x=40, y=270)
+
+            self.l_9 = Label(w, text=('9.' + '   ' + lista_top[8][0] + '  ' + lista_top[8][1]))
+            self.l_9.place(x=40, y=300)
+
+            self.l_10 = Label(w, text=('10.' + '   ' + lista_top[9][0] + '  ' + lista_top[9][1]))
+            self.l_10.place(x=40, y=330)
+
+        texto(self)
+
+def muestra_top10():
+    ventanita = Tk()
+    ventanita.geometry('{}x{}+{}+{}'.format(300, 400,
+                                       POS_VENTANA_X, POS_VENTANA_Y))
+    ventanita.iconbitmap('trofeo.ico')
+    top_diez = TopDiez(ventanita)
+    ventanita.mainloop()
 
 
 # ----------------------------------------------------
