@@ -217,6 +217,7 @@ def coloca_num(y, x):
                                                     pila_coord_jugadas.append([y, x])
                                                     var_juego_en_curso = True
                                                     if valida_estado(sudoku):
+                                                        messagebox.showinfo('¡Felicidades!', '¡Ganaste el juego!')
                                                         horas = int(horas)
                                                         minutos = int(minutos)
                                                         segundos = int(segundos)
@@ -240,8 +241,7 @@ def coloca_num(y, x):
                                                                     lista_top.pop(10)
                                                                     break
                                                         ind += 1
-                                                        escribe_top10()
-                                                        messagebox.showinfo('¡Felicidades!', '¡Ganaste el juego!')
+                                                        escribe_top10(lista_top)
                                                     else:
                                                         zona_de_juego(sudoku)
                                                     break
@@ -458,7 +458,7 @@ def b_iniciar_juego():
     if 0 < len(nombre) < 30:
         var_juego_en_curso = True
         zona_de_juego(sudoku)
-        escribe_top10()
+        escribe_top10(lista_top)
         print(jugador_actual, var_juego_en_curso, var_timer_abajo, var_timer_arriba)
         if var_timer_arriba:
             temporizador_arriba()
@@ -884,18 +884,17 @@ def carga_partida():
     global minutos
     global segundos
     global dict_tablero
+    archivo = open('sudoku2019juegoactual.dat', 'rb')
+    sudoku = pickle.load(archivo)
+    jugador_actual = pickle.load(archivo)
+    horas = pickle.load(archivo)
+    minutos = pickle.load(archivo)
+    segundos = pickle.load(archivo)
+    dict_tablero = pickle.load(archivo)
+    archivo.close()
+    zona_de_juego(sudoku)
     if FileNotFoundError:
         messagebox.showerror('Error', 'No hay partida guardada')
-    else:
-        archivo = open('sudoku2019juegoactual.dat', 'rb')
-        sudoku = pickle.load(archivo)
-        jugador_actual = pickle.load(archivo)
-        horas = pickle.load(archivo)
-        minutos = pickle.load(archivo)
-        segundos = pickle.load(archivo)
-        dict_tablero = pickle.load(archivo)
-        archivo.close()
-        zona_de_juego(sudoku)
 
 
 def valida_estado(sudoku):
@@ -972,8 +971,7 @@ def muestra_top10():
     top_diez = TopDiez(ventanita)
     ventanita.mainloop()
 
-def escribe_top10():
-    global lista_top
+def escribe_top10(lista_top):
     archivo = open('sudoku2019top10.dat', 'w+')
     archivo.write(str(lista_top))
     archivo.close()
